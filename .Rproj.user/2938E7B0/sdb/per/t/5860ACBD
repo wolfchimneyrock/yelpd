@@ -1,0 +1,17 @@
+{
+    "contents" : "library(\"lubridate\")\nsource(\"lookupData.R\")\ngenerate.user.review.curve <- function(user)\n{\n  user = lookup.user.info(user_id)\n  reviews = lookup.reviews.by.user(user$user_id, fields = '{\"date\":1,\"votes\":1}')\n  date.start = user$yelping_since\n  \n}\ngenerate.review.row <- function(review)\n{\n  row = vector()\n  truestars = lookup.business.stars(mongo.bson.value(review,\"business_id\"))\n  user = lookup.user.info(mongo.bson.value(review,\"user_id\"))\n  #  nfriends = lookup.user.nfriends(review$user_id)\n  stars = mongo.bson.value(review,\"stars\")\n  label = abs(truestars-stars)\n  rdate = ymd(mongo.bson.value(review,\"date\"))\n  udate = ymd(user$yelping_since,truncated=1)\n  age = as.numeric(rdate - udate)\n  ureviews = user$review_count\n  funny = mongo.bson.value(review,\"votes.funny\")\n  useful = mongo.bson.value(review,\"votes.useful\")  \n  cool = mongo.bson.value(review,\"votes.cool\")\n  fans = user$fans\n  avg = user$average_stars\n  compliments = sum(unlist(user$compliments),na.rm=TRUE)\n  \n  row = (cbind(label,stars,avg,age,ureviews,funny,useful,cool,fans, compliments))\n}\ngenerate.review.matrix <- function(nrows=10,db = mongo, ns = \"yelp.review\")\n{\n  ## create the counter\n  i = 1\n  cursor = mongo.find(db,ns,fields='{\"text\":0}')\n  rmat = matrix(nrow=0,ncol=10)\n  ## iterate over the cursor\n  while ((i<=nrows)&(mongo.cursor.next(cursor))) {\n    # iterate and grab the next record\n    value = mongo.cursor.value(cursor)\n    #print(value)\n    #tmp = mongo.bson.to.list(value,simplify=TRUE)\n    row = generate.review.row(value)\n    rownames(row)<-mongo.bson.value(value,\"business_id\")\n    rmat = rbind(rmat,row)\n    #cat('.')\n    i = i + 1\n  }\n  \n  return(rmat)\n}",
+    "created" : 1430182563594.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1311324161",
+    "id" : "5860ACBD",
+    "lastKnownWriteTime" : 1430953148,
+    "path" : "~/yelp/generateData.R",
+    "project_path" : "generateData.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

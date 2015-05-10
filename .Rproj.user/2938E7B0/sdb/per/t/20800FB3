@@ -1,0 +1,17 @@
+{
+    "contents" : "#install.packages(\"jsonlite\",\"plyr\")\nlibrary(\"jsonlite\")\nlibrary(\"plyr\")\nreadFromJSON <- function(fname)\n{\n  return(fromJSON(fname))\n}\n",
+    "created" : 1430141685817.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1770138523",
+    "id" : "20800FB3",
+    "lastKnownWriteTime" : 1430158054,
+    "path" : "~/yelp/JSON.R",
+    "project_path" : "JSON.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

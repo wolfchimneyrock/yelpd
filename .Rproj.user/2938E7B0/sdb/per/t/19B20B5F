@@ -1,0 +1,17 @@
+{
+    "contents" : "connect.to.mongo <- function()\n{\n  return(mongo.create())\n}\n\n",
+    "created" : 1430350161239.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "68717785",
+    "id" : "19B20B5F",
+    "lastKnownWriteTime" : 1430350294,
+    "path" : "~/yelp/mongo.R",
+    "project_path" : "mongo.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

@@ -1,0 +1,94 @@
+//db.reviewByBusiness.drop();
+var mapBusiness = function() {
+    var values = {
+        loc: {
+             type: "Point",
+             coordinate: [this.latitude, this.longitude]
+             },
+        street: this.full_address,
+        city: this.city,
+        state: this.state,
+        name: this.name,
+        categories: this.categories
+    };
+    emit(this.business_id, values);
+};
+var mapReview = function() {
+    var values = {
+        user_id: this.user_id,
+        review_id: this.review_id,
+        date: this.date
+    };
+    emit(this.business_id, values);
+};
+var mapTip = function() {
+    var values = {
+        user_id: this.user_id,
+        tip_id: this._id,
+        date: this.date
+    };
+    emit(this.business_id, values);
+};
+var reducetest = function(k,values) {
+    return 0;
+}
+var reduce = function(k, values) {
+    var result = new Object(),
+        reviewFields = {
+          "user_id": '',
+          "review_id": '',
+          "tip_id": '',
+          "date": ''
+        };
+    values.forEach(function(value) {
+        var field;
+        if ("date" in value) {
+            if (!("reviews" in result)) {
+                result.reviews = new Array();
+            }
+            result.reviews.push(value);
+        } 
+        if ("tip_id" in value) {
+           if (!("tips" in result)) {
+              result.tips = new Array();
+           }
+           result.tips.push(value);
+        }
+        if ("reviews" in value) {
+            if (!("reviews" in result)) {
+                result.reviews = new Array();
+            }
+            value.reviews.forEach(function(v) {
+              result.reviews.push(v);
+              //result.reviews.push.apply(result.reviews, value.reviews);
+            });        
+        }
+        if ("tips" in value) {
+            if (!("tips" in result)) {
+               result.tips = new Array();
+            }
+            value.reviews.forEach(function(v) {
+              result.tips.push(v);
+            });
+        }
+        for (field in value) {
+            if (value.hasOwnProperty(field) && !(field in reviewFields)) {
+                result[field] = value[field];
+            }
+        }
+    });
+    return result;
+};
+//var finalize = function(k, values) {
+//  if("reviews" in values) {
+//  }
+//  return values;
+//}
+//db.business.mapReduce(mapBusiness, reduce, {"sort":{"business_id":1}, "out": {"reduce": "reviewByBusiness"}});
+//db.review.mapReduce(mapReview, reduce, {"sort":{"business_id":1,"date":1}, "out": {"reduce":"reviewByBusiness"}});
+//db.business.mapReduce(mapBusiness, reduce, {"sort":{"business_id":1}, "out": {"reduce":"reviewByBusiness" }});
+db.tip.mapReduce(mapTip, reduce, {"sort":{"business_id":1,"date":1}, "out": {"reduce":"reviewByBusiness"}});
+db.reviewByBusiness.find().forEach(function(item) {
+    db.reviewByBusiness.update({_id: item._id}, item.value);
+});
+
