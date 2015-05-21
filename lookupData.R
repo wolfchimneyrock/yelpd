@@ -1,5 +1,10 @@
 library("rmongodb")
 library("lubridate")
+library("magrittr")
+library("zoo")
+library("bigmemory")
+
+
 generate.user.history <- function(history, count=1)
 {
   hist = mongo.bson.to.list(history)
@@ -7,18 +12,25 @@ generate.user.history <- function(history, count=1)
   loc = vector()
   mat = matrix(nrow=0,ncol=2)
   i = 0
+  lastdate=0
   while ((1<count)&&(mongo.bson.iterator.next(iter))) {
     val = mongo.bson.iterator.value(iter)
-    date = mongo.bson.value(val,"date")
-    loc = mongo.bson.value(val,"loc.coordinate")
-    rownames(loc) <- date
+    date = decimal_date(mongo.bson.value(val,"date"))
+    loc = mongo.sbon.value(val,"loc.coordinate")
+    #rownames(loc) <- date
     mat = rbind(mat,loc)
     i = i + 1
+    lastdate=date
   }
+
   return(mat)
 }
-lookup.top.users.location.history <- function(skip=0,nrows=10,db = mongo, ns = "yelp.userLocation")
+ma <- function(x,n=5,sides=1){filter(x,rep(1/n,n), sides=sides)}
+
+lookup.top.users.location.history <- function(skip=0,nrows=10,db = mongo, ns = "yelp.userLocation",window=7)
 { 
+  library(fpc)
+  library(cluster)
   query <- '{}'
   fields <- '{}'
   sort <- '{"count":-1}'
@@ -55,8 +67,29 @@ lookup.top.users.location.history <- function(skip=0,nrows=10,db = mongo, ns = "
   l$lat=as.numeric(as.character(l$lat))
   l$long=as.numeric(as.character(l$long))
   l$date=as.Date(as.POSIXct(l$date,origin="1970-01-01"))
+  l$diff=c(0,diff(l$date))
+#  l$rolling = c(rep(0,window-1),rollmean(l$diff,window))
+  l$rolling=ma(l$diff)
+  d=data.frame(scale(l$long),scale(l$lat),scale(decimal_date(l$date)))
+  print(skip)
+  print("clustering...")
+  pamk.best <- pamk(d,usepam=T)
+  p=pam(d, pamk.best$nc)
+  l$cluster=p$clustering
   return (l)
   
+}
+lookup.states <- function(skip=0,nrows=1,db=mongo,ns="yelp.userLocation") 
+{
+  query='{}'
+  fields='{"_id":0,"state":1}'
+  sort='{"count":-1}'
+  states=unique(unlist(mongo.find.all(db,ns,query=query,skip=skip,limit=nrows,fields=fields,sort=sort,data.frame=FALSE)))
+#  s=1:length(states)
+#  names(s)=states
+  states.col=c(rainbow(length(states)),rainbow(10))
+  names(states.col)=c(states,1:10)
+  return (states.col)
 }
 lookup.review.dates <- function(skip=0,limit=0,db=mongo, ns="yelp.review") {
   query = sprintf('{}')

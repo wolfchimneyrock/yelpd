@@ -1,5 +1,18 @@
 library("lubridate")
+library("magrittr")
+library("dplyr")
+library("foreach")
+
 source("lookupData.R")
+generate.categories <- function(db=mongo,ns="yelp.business",state="",parent="")
+{
+  categories=lookup.category.by.popularity(db=db,ns=ns,state=state,parent=parent)
+  total = lookup.category.total(parent)
+  sum=0
+  foreach(c=categories$category) %do% lookup.category.total(c,parent=parent) when (sum<total)
+#  categories %$% .$category[.$category %in% parent] %>% as.character %>% print
+  
+}
 generate.user.review.curve <- function(user)
 {
   user = lookup.user.info(user_id)
